@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -13,6 +15,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late Timer timer;
   bool _isDark = true;
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 100;
@@ -21,9 +24,9 @@ class _MyHomePageState extends State<MyHomePage> {
   String? hints;
   final CountDownController _controller = CountDownController();
   List<MyTime> myWorkTime = [];
-
   List<Widget> myWidgetClock = [];
   List<Widget> myWorkTimeWidget = [];
+  static List<List<int>> myInt = [];
 
   void setDark() {
     ThemeManager.of(context).setBrightnessPreference(
@@ -115,6 +118,65 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Container editTimePicker(
+      {required int round, required int op, required Function setNewState}) {
+    int min = 1;
+    int max = 120;
+    return Container(
+      margin: const EdgeInsets.all(5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          GestureDetector(
+            onTap: () => setNewState(() {
+              if (myInt[round][op] > min) {
+                myInt[round][op]--;
+              }
+            }),
+            onLongPressStart: (details) {
+              timer = Timer.periodic(
+                const Duration(milliseconds: 100),
+                (timer) {
+                  setNewState(() {
+                    if (myInt[round][op] > min) {
+                      myInt[round][op]--;
+                    }
+                  });
+                },
+              );
+            },
+            onLongPressEnd: ((details) {
+              timer.cancel();
+            }),
+            child: const Icon(Icons.remove),
+          ),
+          Text('${myInt[round][op]}'),
+          GestureDetector(
+            onTap: () => setNewState(() {
+              if (myInt[round][op] < max) {
+                myInt[round][op]++;
+              }
+            }),
+            onLongPressStart: (details) {
+              timer =
+                  Timer.periodic(const Duration(milliseconds: 100), ((timer) {
+                setNewState(() {
+                  if (myInt[round][op] < max) {
+                    myInt[round][op]++;
+                  }
+                });
+              }));
+            },
+            onLongPressEnd: ((details) {
+              timer.cancel();
+            }),
+            child: const Icon(Icons.add),
+          ),
+        ],
+      ),
+    );
+  }
+
   Divider myXDivider() {
     return const Divider(
       thickness: 0.5,
@@ -123,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton submitBtn() {
+  ElevatedButton submitBtn({required double h, required double w}) {
     return ElevatedButton(
       style: ButtonStyle(
           backgroundColor:
@@ -140,7 +202,11 @@ class _MyHomePageState extends State<MyHomePage> {
   myBtnS(double h, double w) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [submitBtn(), const SizedBox(width: 20), editBtn(h: h, w: w)],
+      children: [
+        submitBtn(h: h, w: w),
+        const SizedBox(width: 20),
+        editBtn(h: h, w: w)
+      ],
     );
   }
 
@@ -153,18 +219,32 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             myWorkTimeWidget.clear();
             getTimeWork();
-            if (myWorkTime.isNotEmpty) {
-              for (int i = 0; i < myWorkTime.length; i++) {
-                myWorkTimeWidget.add(buildMyEdit(roundNumber: (i + 1), w: w));
-              }
-            }
           });
           await bottomSheet(h: h, w: w);
         },
         child: const Icon(Icons.edit));
   }
 
+  void getMyInt() {
+    myInt.clear();
+    if (myWorkTime.isNotEmpty) {
+      for (int i = 0; i < myWorkTime.length; i++) {
+        myInt.add([myWorkTime[i].startWork, myWorkTime[i].startBreak]);
+      }
+    }
+  }
+
+  initMyEdit({required double w, required Function x}) {
+    myWorkTimeWidget.clear();
+    if (myWorkTime.isNotEmpty) {
+      for (int i = 0; i < myWorkTime.length; i++) {
+        myWorkTimeWidget.add(buildMyEdit(roundNumber: (i + 1), w: w, edit: x));
+      }
+    }
+  }
+
   dynamic bottomSheet({required double h, required double w}) async {
+    getMyInt();
     return await showModalBottomSheet(
         backgroundColor: _isDark
             ? darkColor.withOpacity(0.5)
@@ -180,7 +260,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         builder: (context) {
           return StatefulBuilder(
-            builder: (context, StateSetter myState) {
+            builder: (context, myState) {
+              initMyEdit(w: w, x: myState);
               return Container(
                 height: h,
                 margin: const EdgeInsets.symmetric(vertical: 15),
@@ -196,7 +277,8 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  buildMyEdit({required int roundNumber, required double w}) {
+  buildMyEdit(
+      {required int roundNumber, required double w, required Function edit}) {
     return Center(
       child: Container(
         width: w,
@@ -222,14 +304,20 @@ class _MyHomePageState extends State<MyHomePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Text('Work for mins'.toUpperCase()),
-                            // roundPicker(isL: false)
+                            editTimePicker(
+                                round: roundNumber - 1,
+                                op: 0,
+                                setNewState: edit)
                           ],
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Text('Break for mins'.toUpperCase()),
-                            // roundPicker(isL: false)
+                            editTimePicker(
+                                round: roundNumber - 1,
+                                op: 1,
+                                setNewState: edit)
                           ],
                         ),
                       ],
@@ -238,7 +326,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: const Icon(Icons.delete_forever_rounded),
                       onPressed: () {
                         setState(() {
-                         // myWorkTimeWidget.removeAt(roundNumber-1);
+                          edit(() {
+                            myInt.removeAt(roundNumber - 1);
+                            myWorkTime.removeAt(roundNumber - 1);
+                            myWorkTimeWidget.removeAt(roundNumber - 1);
+                          });
                         });
                       },
                     )
@@ -267,9 +359,9 @@ class _MyHomePageState extends State<MyHomePage> {
       fillColor: _isDark ? darkColor.withOpacity(0.5) : Colors.blue,
       autoStart: false,
       isReverse: true,
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: 33.0,
-        color: Colors.white,
+        color: _isDark ? Colors.white : Colors.black,
         fontWeight: FontWeight.bold,
       ),
       onStart: () {
