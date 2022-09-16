@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:theme_manager/theme_manager.dart';
-import 'package:time_management/my_home_page.dart';
+import 'package:time_management/view/my_home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

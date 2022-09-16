@@ -1,11 +1,10 @@
 import 'dart:async';
-
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:theme_manager/theme_manager.dart';
-import 'package:time_management/Model/my_time.dart';
+import 'package:time_management/model/my_time.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -20,6 +19,9 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 100;
   int _currentValueBreakPicker = 15;
+  final int _maxRound = 12;
+  final int _maxWorkTime = 120;
+  final int _maxBreakTime = 60;
   Color darkColor = const Color.fromARGB(255, 32, 33, 36);
   String? hints;
   final CountDownController _controller = CountDownController();
@@ -45,20 +47,20 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  workBreakTime() {
+  workBreakTimeWidget() {
     return Container(
       margin: const EdgeInsets.all(5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          buildCon(label: 'work time', op: 0),
-          buildCon(label: 'break time', op: 1)
+          buildWorkBreakTime(label: 'work time', op: 0),
+          buildWorkBreakTime(label: 'break time', op: 1)
         ],
       ),
     );
   }
 
-  Column buildCon({required String label, required int op}) {
+  Column buildWorkBreakTime({required String label, required int op}) {
     return Column(
       children: [
         Text(
@@ -68,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
         NumberPicker(
           value: op == 0 ? _currentValueWorkPicker : _currentValueBreakPicker,
           minValue: 1,
-          maxValue: op == 0 ? 120 : 60,
+          maxValue: op == 0 ? _maxWorkTime : _maxBreakTime,
           infiniteLoop: true,
           onChanged: (value) => setState(() {
             op == 0
@@ -82,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Container roundPicker() {
     int min = 1;
-    int max = 10;
+    int max = _maxRound;
     return Container(
       margin: const EdgeInsets.all(5),
       child: Column(
@@ -121,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Container editTimePicker(
       {required int round, required int op, required Function setNewState}) {
     int min = 1;
-    int max = 120;
+    int max = op == 0 ? _maxWorkTime : _maxBreakTime;
     return Container(
       margin: const EdgeInsets.all(5),
       child: Row(
@@ -222,7 +224,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
           await bottomSheet(h: h, w: w);
         },
-        child: const Icon(Icons.edit));
+        child: const Icon(Icons.dehaze_rounded));
   }
 
   void getMyInt() {
@@ -364,12 +366,8 @@ class _MyHomePageState extends State<MyHomePage> {
         color: _isDark ? Colors.white : Colors.black,
         fontWeight: FontWeight.bold,
       ),
-      onStart: () {
-        // debugPrint('Countdown Started');
-      },
-      onComplete: () {
-        //  debugPrint('Countdown Ended');
-      },
+      onStart: () {},
+      onComplete: () {},
     );
   }
 
@@ -398,7 +396,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(children: [
             roundPicker(),
             myXDivider(),
-            workBreakTime(),
+            workBreakTimeWidget(),
             myBtnS(height * 0.80, width * 0.70),
             const SizedBox(height: 10),
           ]),
@@ -407,173 +405,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-
-/*
-{
-
-class _MyHomePageState extends State<MyHomePage> {
-  final int _duration = 10;
-  final CountDownController _controller = CountDownController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title!),
-      ),
-      body: Center(
-        child: CircularCountDownTimer(
-          // Countdown duration in Seconds.
-          duration: _duration,
-
-          // Countdown initial elapsed Duration in Seconds.
-          initialDuration: 0,
-
-          // Controls (i.e Start, Pause, Resume, Restart) the Countdown Timer.
-          controller: _controller,
-
-          // Width of the Countdown Widget.
-          width: MediaQuery.of(context).size.width / 2,
-
-          // Height of the Countdown Widget.
-          height: MediaQuery.of(context).size.height / 2,
-
-          // Ring Color for Countdown Widget.
-          ringColor: Colors.grey[300]!,
-
-          // Ring Gradient for Countdown Widget.
-          ringGradient: null,
-
-          // Filling Color for Countdown Widget.
-          fillColor: Colors.purpleAccent[100]!,
-
-          // Filling Gradient for Countdown Widget.
-          fillGradient: null,
-
-          // Background Color for Countdown Widget.
-          backgroundColor: Colors.purple[500],
-
-          // Background Gradient for Countdown Widget.
-          backgroundGradient: null,
-
-          // Border Thickness of the Countdown Ring.
-          strokeWidth: 20.0,
-
-          // Begin and end contours with a flat edge and no extension.
-          strokeCap: StrokeCap.round,
-
-          // Text Style for Countdown Text.
-          textStyle: const TextStyle(
-            fontSize: 33.0,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-
-          // Format for the Countdown Text.
-          textFormat: CountdownTextFormat.S,
-
-          // Handles Countdown Timer (true for Reverse Countdown (max to 0), false for Forward Countdown (0 to max)).
-          isReverse: false,
-
-          // Handles Animation Direction (true for Reverse Animation, false for Forward Animation).
-          isReverseAnimation: false,
-
-          // Handles visibility of the Countdown Text.
-          isTimerTextShown: true,
-
-          // Handles the timer start.
-          autoStart: false,
-
-          // This Callback will execute when the Countdown Starts.
-          onStart: () {
-            // Here, do whatever you want
-            debugPrint('Countdown Started');
-          },
-
-          // This Callback will execute when the Countdown Ends.
-          onComplete: () {
-            // Here, do whatever you want
-            debugPrint('Countdown Ended');
-          },
-
-          // This Callback will execute when the Countdown Changes.
-          onChange: (String timeStamp) {
-            // Here, do whatever you want
-            debugPrint('Countdown Changed $timeStamp');
-          },
-        ),
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 30,
-          ),
-          _button(
-            title: "Start",
-            onPressed: () => _controller.start(),
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          _button(
-            title: "Pause",
-            onPressed: () => _controller.pause(),
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          _button(
-            title: "Resume",
-            onPressed: () => _controller.resume(),
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          _button(
-            title: "Restart",
-            onPressed: () => _controller.restart(duration: _duration),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _button({required String title, VoidCallback? onPressed}) {
-    return Expanded(
-      child: ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(Colors.purple),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          title,
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-}*/
-
-/*    return await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.black.withOpacity(0.5),
-      elevation: 10,
-      builder: (
-        context,
-      ) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setStateForgetPassword) {
-            return Container(
-              decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromARGB(218, 0, 170, 179),
-                  Color.fromARGB(172, 66, 239, 248),
-                ],
-              )), */
