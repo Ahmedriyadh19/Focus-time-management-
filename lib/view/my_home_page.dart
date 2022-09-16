@@ -17,7 +17,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late Timer timer;
   bool _isDark = true;
   int _currentValueRoundPicker = 3;
-  int _currentValueWorkPicker = 100;
+  int _currentValueWorkPicker = 20;
   int _currentValueBreakPicker = 15;
   final int _maxRound = 12;
   final int _maxWorkTime = 120;
@@ -25,8 +25,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Color darkColor = const Color.fromARGB(255, 32, 33, 36);
   String? hints;
   final CountDownController _controller = CountDownController();
+  late final CircularCountDownTimer clock;
   List<MyTime> myWorkTime = [];
-  List<Widget> myWidgetClock = [];
+  Widget? myWidgetClock;
   List<Widget> myWorkTimeWidget = [];
   static List<List<int>> myInt = [];
 
@@ -224,7 +225,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
           await bottomSheet(h: h, w: w);
         },
-        child: const Icon(Icons.dehaze_rounded));
+        child: const Icon(Icons.reorder_rounded));
   }
 
   void getMyInt() {
@@ -269,9 +270,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 margin: const EdgeInsets.symmetric(vertical: 15),
                 child: SingleChildScrollView(
                   child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: myWorkTimeWidget),
+                    children: [
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: myWorkTimeWidget),
+                      submitMyCustomizeWorkTimeBtn(h: h, w: w, ctx: context)
+                    ],
+                  ),
                 ),
               );
             },
@@ -288,7 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
             color: _isDark
                 ? darkColor.withOpacity(0.7)
                 : Colors.blue.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(50)),
+            borderRadius: BorderRadius.circular(15)),
         margin: const EdgeInsets.all(20),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -344,30 +349,60 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  p({required double h, required double w, required int d}) {
+  drawTime({required double h, required double w, required int d}) {
     return Column(
-      children: [drawTime(h: h, w: w, d: d)],
+      children: [
+        CircularCountDownTimer(
+          duration: d * 60,
+          controller: _controller,
+          width: w / 2,
+          height: h / 4,
+          ringColor:
+              _isDark ? const Color.fromARGB(255, 32, 97, 12) : Colors.white,
+          fillColor: _isDark ? darkColor.withOpacity(0.5) : Colors.blue,
+          autoStart: false,
+          isReverse: true,
+          textStyle: TextStyle(
+            fontSize: 33.0,
+            color: Colors.greenAccent,
+            fontWeight: FontWeight.bold,
+          ),
+          onStart: () {},
+          onComplete: () {},
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            clockBtn(op: 0),
+            clockBtn(op: 1),
+            clockBtn(op: 2),
+          ],
+        )
+      ],
     );
   }
 
-  drawTime({required double h, required double w, required int d}) {
-    return CircularCountDownTimer(
-      duration: d * 60,
-      initialDuration: 0,
-      controller: _controller,
-      width: w / 2,
-      height: h / 4,
-      ringColor: _isDark ? const Color.fromARGB(255, 32, 97, 12) : Colors.white,
-      fillColor: _isDark ? darkColor.withOpacity(0.5) : Colors.blue,
-      autoStart: false,
-      isReverse: true,
-      textStyle: TextStyle(
-        fontSize: 33.0,
-        color: _isDark ? Colors.white : Colors.black,
-        fontWeight: FontWeight.bold,
-      ),
-      onStart: () {},
-      onComplete: () {},
+  clockBtn({required int op}) {
+    return ElevatedButton(
+      style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all(_isDark ? darkColor : null)),
+      onPressed: () {
+        setState(() {
+          if (op == 0) {
+            _controller.start();
+          } else if (op == 1) {
+            _controller.resume();
+          } else {
+            _controller.pause();
+          }
+        });
+      },
+      child: op == 0
+          ? Icon(Icons.restart_alt_rounded)
+          : op == 1
+              ? Icon(Icons.play_arrow_rounded)
+              : Icon(Icons.pause_rounded),
     );
   }
 
@@ -378,6 +413,33 @@ class _MyHomePageState extends State<MyHomePage> {
           startBreak: _currentValueBreakPicker,
           startWork: _currentValueWorkPicker));
     }
+  }
+
+  ElevatedButton submitMyCustomizeWorkTimeBtn(
+      {required double h, required double w, required BuildContext ctx}) {
+    return ElevatedButton(
+      style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all(_isDark ? darkColor : null)),
+      child: const Icon(Icons.directions_run_rounded),
+      onPressed: () {
+        setState(() {
+          myWidgetClock = null;
+          getMyCustomizeWorkTime();
+          Navigator.pop(ctx);
+          myWidgetClock = drawTime(d: myWorkTime[0].startWork, h: h, w: w);
+        });
+      },
+    );
+  }
+
+  void getMyCustomizeWorkTime() {
+    myWorkTime.clear();
+    for (int i = 0; i < myInt.length; i++) {
+      myWorkTime.add(MyTime(startWork: myInt[i][0], startBreak: myInt[i][1]));
+    }
+
+    debugPrint(myWorkTime.toString());
   }
 
   @override
@@ -399,6 +461,7 @@ class _MyHomePageState extends State<MyHomePage> {
             workBreakTimeWidget(),
             myBtnS(height * 0.80, width * 0.70),
             const SizedBox(height: 10),
+            if (myWidgetClock != null) myWidgetClock!
           ]),
         ),
       ),
