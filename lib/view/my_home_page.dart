@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -14,22 +15,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final CountDownController _controller = CountDownController();
   late Timer timer;
   bool _isDark = true;
+  bool _isStart = false;
+  bool _isAttempt = false;
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 20;
   int _currentValueBreakPicker = 15;
+  final int _targetIndex = 0;
   final int _maxRound = 12;
   final int _maxWorkTime = 120;
   final int _maxBreakTime = 60;
   Color darkColor = const Color.fromARGB(255, 32, 33, 36);
   String? hints;
-  final CountDownController _controller = CountDownController();
-  late final CircularCountDownTimer clock;
   List<MyTime> myWorkTime = [];
-  Widget? myWidgetClock;
   List<Widget> myWorkTimeWidget = [];
-  static List<List<int>> myInt = [];
+  List<int> myTimeTarget = [];
+  List<List<int>> myInt = [];
 
   void setDark() {
     ThemeManager.of(context).setBrightnessPreference(
@@ -48,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  workBreakTimeWidget() {
+  Container workBreakTimeWidget() {
     return Container(
       margin: const EdgeInsets.all(5),
       child: Row(
@@ -197,12 +200,24 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         setState(() {
           getTimeWork();
+          getMyInt();
+          getTargetTime();
         });
       },
     );
   }
 
-  myBtnS(double h, double w) {
+  void getTargetTime() {
+    setState(() {
+      myTimeTarget.clear();
+      for (int i = 0; i < myWorkTime.length; i++) {
+        myTimeTarget.add(myWorkTime[i].startWork);
+        myTimeTarget.add(myWorkTime[i].startBreak);
+      }
+    });
+  }
+
+  Row myBtnS(double h, double w) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -213,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  editBtn({required double h, required double w}) {
+  ElevatedButton editBtn({required double h, required double w}) {
     return ElevatedButton(
         style: ButtonStyle(
             backgroundColor:
@@ -229,15 +244,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void getMyInt() {
-    myInt.clear();
-    if (myWorkTime.isNotEmpty) {
-      for (int i = 0; i < myWorkTime.length; i++) {
-        myInt.add([myWorkTime[i].startWork, myWorkTime[i].startBreak]);
+    setState(() {
+      myInt.clear();
+      if (myWorkTime.isNotEmpty) {
+        for (int i = 0; i < myWorkTime.length; i++) {
+          myInt.add([myWorkTime[i].startWork, myWorkTime[i].startBreak]);
+        }
       }
-    }
+    });
   }
 
-  initMyEdit({required double w, required Function x}) {
+  void initMyEdit({required double w, required Function x}) {
     myWorkTimeWidget.clear();
     if (myWorkTime.isNotEmpty) {
       for (int i = 0; i < myWorkTime.length; i++) {
@@ -284,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  buildMyEdit(
+  Center buildMyEdit(
       {required int roundNumber, required double w, required Function edit}) {
     return Center(
       child: Container(
@@ -349,7 +366,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  drawTime({required double h, required double w, required int d}) {
+  Column drawTime({required double h, required double w, required int d}) {
     return Column(
       children: [
         CircularCountDownTimer(
@@ -364,55 +381,56 @@ class _MyHomePageState extends State<MyHomePage> {
           isReverse: true,
           textStyle: TextStyle(
             fontSize: 33.0,
-            color: Colors.greenAccent,
+            color: _isDark ? Colors.greenAccent : Colors.blueAccent,
             fontWeight: FontWeight.bold,
           ),
           onStart: () {},
           onComplete: () {},
+          onChange: ((value) {}),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            clockBtn(op: 0),
-            clockBtn(op: 1),
-            clockBtn(op: 2),
+            clockBtn(),
           ],
         )
       ],
     );
   }
 
-  clockBtn({required int op}) {
+  ElevatedButton clockBtn() {
     return ElevatedButton(
       style: ButtonStyle(
           backgroundColor:
               MaterialStateProperty.all(_isDark ? darkColor : null)),
       onPressed: () {
         setState(() {
-          if (op == 0) {
+          if (!_isAttempt) {
             _controller.start();
-          } else if (op == 1) {
-            _controller.resume();
+            _isAttempt = true;
           } else {
-            _controller.pause();
+            _isStart = !_isStart;
+            _isStart ? _controller.pause() : _controller.resume();
           }
         });
       },
-      child: op == 0
-          ? Icon(Icons.restart_alt_rounded)
-          : op == 1
+      child: !_isAttempt
+          ? Icon(Icons.start_rounded)
+          : _isStart
               ? Icon(Icons.play_arrow_rounded)
               : Icon(Icons.pause_rounded),
     );
   }
 
   void getTimeWork() {
-    myWorkTime.clear();
-    for (int i = 0; i < _currentValueRoundPicker; i++) {
-      myWorkTime.add(MyTime(
-          startBreak: _currentValueBreakPicker,
-          startWork: _currentValueWorkPicker));
-    }
+    setState(() {
+      myWorkTime.clear();
+      for (int i = 0; i < _currentValueRoundPicker; i++) {
+        myWorkTime.add(MyTime(
+            startBreak: _currentValueBreakPicker,
+            startWork: _currentValueWorkPicker));
+      }
+    });
   }
 
   ElevatedButton submitMyCustomizeWorkTimeBtn(
@@ -424,22 +442,23 @@ class _MyHomePageState extends State<MyHomePage> {
       child: const Icon(Icons.directions_run_rounded),
       onPressed: () {
         setState(() {
-          myWidgetClock = null;
           getMyCustomizeWorkTime();
           Navigator.pop(ctx);
-          myWidgetClock = drawTime(d: myWorkTime[0].startWork, h: h, w: w);
         });
       },
     );
   }
 
   void getMyCustomizeWorkTime() {
-    myWorkTime.clear();
-    for (int i = 0; i < myInt.length; i++) {
-      myWorkTime.add(MyTime(startWork: myInt[i][0], startBreak: myInt[i][1]));
-    }
-
-    debugPrint(myWorkTime.toString());
+    setState(() {
+      myWorkTime.clear();
+      for (int i = 0; i < myInt.length; i++) {
+        myWorkTime.add(MyTime(startWork: myInt[i][0], startBreak: myInt[i][1]));
+      }
+      _currentValueWorkPicker = myWorkTime[0].startWork;
+      _currentValueBreakPicker = myWorkTime[0].startBreak;
+      _currentValueRoundPicker = myWorkTime.length;
+    });
   }
 
   @override
@@ -451,7 +470,7 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 5,
         actions: [darkBtn()],
         centerTitle: true,
-        title: Center(child: Text('Time'.toUpperCase())),
+        title: Center(child: Text('focus time'.toUpperCase())),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -461,7 +480,8 @@ class _MyHomePageState extends State<MyHomePage> {
             workBreakTimeWidget(),
             myBtnS(height * 0.80, width * 0.70),
             const SizedBox(height: 10),
-            if (myWidgetClock != null) myWidgetClock!
+            if (myTimeTarget.isNotEmpty)
+              drawTime(d: myTimeTarget[0], h: height, w: width)
           ]),
         ),
       ),
