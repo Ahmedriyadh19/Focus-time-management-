@@ -392,11 +392,31 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            clockBtn(),
-          ],
+          children: [clockBtn(), if (myTimeTarget.isNotEmpty) skipBtn()],
         )
       ],
+    );
+  }
+
+  ElevatedButton skipBtn() {
+    return ElevatedButton(
+      style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all(_isDark ? darkColor : null)),
+      child: Icon(Icons.skip_next_rounded),
+      onPressed: () {
+        setState(() {
+          if (myTimeTarget.isNotEmpty &&
+              _targetIndex < myTimeTarget.length - 1) {
+            _targetIndex++;
+            _controller.restart(duration: (myTimeTarget[_targetIndex]) * 60);
+          } else {
+            _targetIndex = 0;
+            myTimeTarget.clear();
+            _isAttempt = false;
+          }
+        });
+      },
     );
   }
 
@@ -408,7 +428,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         setState(() {
           if (!_isAttempt) {
-            _controller.start();
+            _controller.restart(duration: myTimeTarget[_targetIndex] * 60);
             _isAttempt = true;
           } else {
             _isStart = !_isStart;
@@ -534,7 +554,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 if (myTimeTarget.isNotEmpty) viewMyTime(),
                 const SizedBox(height: 10),
-                if (myTimeTarget.isNotEmpty)
+                if (myTimeTarget.isNotEmpty &&
+                    _targetIndex < myTimeTarget.length)
                   drawTime(d: myTimeTarget[_targetIndex], h: height, w: width),
               ]),
         ),
