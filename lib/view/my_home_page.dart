@@ -18,7 +18,6 @@ class _MyHomePageState extends State<MyHomePage> {
   late Timer timer;
   bool _isDark = true;
   bool _isStart = false;
-  bool _isAttempt = false;
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 20;
   int _currentValueBreakPicker = 15;
@@ -27,7 +26,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final int _maxWorkTime = 120;
   final int _maxBreakTime = 60;
   Color darkColor = const Color.fromARGB(255, 32, 33, 36);
-  //String? hints;
   List<MyTime> myWorkTime = [];
   List<Widget> myWorkTimeEditWidget = [];
   List<int> myTimeTarget = [];
@@ -191,19 +189,22 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton submitBtn({required double h, required double w}) {
-    return ElevatedButton(
-      style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all(_isDark ? darkColor : null)),
-      child: const Icon(Icons.directions_run_rounded),
-      onPressed: () {
-        setState(() {
-          getTimeWork();
-          getMyInt();
-          getTargetTime();
-        });
-      },
+  Tooltip submitBtn({required double h, required double w}) {
+    return Tooltip(
+      message: 'set all'.toUpperCase(),
+      child: ElevatedButton(
+        style: ButtonStyle(
+            backgroundColor:
+                MaterialStateProperty.all(_isDark ? darkColor : null)),
+        child: const Icon(Icons.directions_run_rounded),
+        onPressed: () {
+          setState(() {
+            getTimeWork();
+            getMyInt();
+            getTargetTime();
+          });
+        },
+      ),
     );
   }
 
@@ -228,19 +229,22 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  ElevatedButton editBtn({required double h, required double w}) {
-    return ElevatedButton(
-        style: ButtonStyle(
-            backgroundColor:
-                MaterialStateProperty.all(_isDark ? darkColor : null)),
-        onPressed: () async {
-          setState(() {
-            myWorkTimeEditWidget.clear();
-            getTimeWork();
-          });
-          await bottomSheet(h: h, w: w);
-        },
-        child: const Icon(Icons.reorder_rounded));
+  Tooltip editBtn({required double h, required double w}) {
+    return Tooltip(
+      message: 'edit'.toUpperCase(),
+      child: ElevatedButton(
+          style: ButtonStyle(
+              backgroundColor:
+                  MaterialStateProperty.all(_isDark ? darkColor : null)),
+          onPressed: () async {
+            setState(() {
+              myWorkTimeEditWidget.clear();
+              getTimeWork();
+            });
+            await bottomSheet(h: h, w: w);
+          },
+          child: const Icon(Icons.reorder_rounded)),
+    );
   }
 
   void getMyInt() {
@@ -388,59 +392,67 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           onStart: () {},
           onComplete: () {},
-          onChange: ((value) {}),
         ),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [clockBtn(), if (myTimeTarget.isNotEmpty) skipBtn()],
+          children: [clockBtn(op: 0), clockBtn(op: 1), skipBtn()],
         )
       ],
     );
   }
 
-  ElevatedButton skipBtn() {
-    return ElevatedButton(
-      style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all(_isDark ? darkColor : null)),
-      child: Icon(Icons.skip_next_rounded),
-      onPressed: () {
-        setState(() {
-          if (myTimeTarget.isNotEmpty &&
-              _targetIndex < myTimeTarget.length - 1) {
-            _targetIndex++;
-            _controller.restart(duration: (myTimeTarget[_targetIndex]) * 60);
-          } else {
-            _targetIndex = 0;
-            myTimeTarget.clear();
-            _isAttempt = false;
-          }
-        });
-      },
+  Tooltip skipBtn() {
+    return Tooltip(
+      message: 'next'.toUpperCase(),
+      child: ElevatedButton(
+        style: ButtonStyle(
+            backgroundColor:
+                MaterialStateProperty.all(_isDark ? darkColor : null)),
+        child: Icon(Icons.skip_next_rounded),
+        onPressed: () {
+          setState(() {
+            if (myTimeTarget.isNotEmpty &&
+                _targetIndex < myTimeTarget.length - 1) {
+              _targetIndex++;
+              _controller.restart(duration: (myTimeTarget[_targetIndex]) * 60);
+            } else {
+              _targetIndex = 0;
+              myTimeTarget.clear();
+            }
+          });
+        },
+      ),
     );
   }
 
-  ElevatedButton clockBtn() {
-    return ElevatedButton(
-      style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all(_isDark ? darkColor : null)),
-      onPressed: () {
-        setState(() {
-          if (!_isAttempt) {
-            _controller.restart(duration: myTimeTarget[_targetIndex] * 60);
-            _isAttempt = true;
-          } else {
-            _isStart = !_isStart;
-            _isStart ? _controller.pause() : _controller.resume();
-          }
-        });
-      },
-      child: !_isAttempt
-          ? Icon(Icons.start_rounded)
+  Tooltip clockBtn({required int op}) {
+    return Tooltip(
+      message: op == 0
+          ? 'start over'.toUpperCase()
           : _isStart
-              ? Icon(Icons.play_arrow_rounded)
-              : Icon(Icons.pause_rounded),
+              ? 'resume'.toUpperCase()
+              : 'pause'.toUpperCase(),
+      child: ElevatedButton(
+        style: ButtonStyle(
+            backgroundColor:
+                MaterialStateProperty.all(_isDark ? darkColor : null)),
+        onPressed: () {
+          setState(() {
+            if (op == 0) {
+              _controller.restart(duration: myTimeTarget[_targetIndex] * 60);
+            } else {
+              _isStart = !_isStart;
+              _isStart ? _controller.pause() : _controller.resume();
+            }
+          });
+        },
+        child: op == 0
+            ? Icon(Icons.redo_rounded)
+            : _isStart
+                ? Icon(Icons.play_arrow_rounded)
+                : Icon(Icons.pause_rounded),
+      ),
     );
   }
 
@@ -455,19 +467,22 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  ElevatedButton submitMyCustomizeWorkTimeBtn(
+  Tooltip submitMyCustomizeWorkTimeBtn(
       {required double h, required double w, required BuildContext ctx}) {
-    return ElevatedButton(
-      style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all(_isDark ? darkColor : null)),
-      child: const Icon(Icons.directions_run_rounded),
-      onPressed: () {
-        setState(() {
-          getMyCustomizeWorkTime();
-          Navigator.pop(ctx);
-        });
-      },
+    return Tooltip(
+      message: 'confirm'.toUpperCase(),
+      child: ElevatedButton(
+        style: ButtonStyle(
+            backgroundColor:
+                MaterialStateProperty.all(_isDark ? darkColor : null)),
+        child: const Icon(Icons.directions_run_rounded),
+        onPressed: () {
+          setState(() {
+            getMyCustomizeWorkTime();
+            Navigator.pop(ctx);
+          });
+        },
+      ),
     );
   }
 
@@ -556,6 +571,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 if (myTimeTarget.isNotEmpty &&
                     _targetIndex < myTimeTarget.length)
+                  Text('step ${_targetIndex + 1} of ${myTimeTarget.length}'
+                      .toUpperCase()),
+                const SizedBox(height: 10),
+                if (myTimeTarget.isNotEmpty &&
+                    _targetIndex < myTimeTarget.length)
                   drawTime(d: myTimeTarget[_targetIndex], h: height, w: width),
               ]),
         ),
@@ -563,18 +583,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-/** ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  if (_targetIndex < myTimeTarget.length - 1) {
-                    _targetIndex++;
-                  }
-                  _controller.restart(
-                      duration: myTimeTarget[_targetIndex] * 60);
-                  debugPrint(_targetIndex.toString());
-                  debugPrint(myTimeTarget.length.toString());
-                  _controller.start();
-                });
-              },
-              child: Text('press'),
-            ) */
