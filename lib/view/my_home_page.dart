@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -23,16 +22,17 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 20;
   int _currentValueBreakPicker = 15;
-  final int _targetIndex = 0;
+  int _targetIndex = 0;
   final int _maxRound = 12;
   final int _maxWorkTime = 120;
   final int _maxBreakTime = 60;
   Color darkColor = const Color.fromARGB(255, 32, 33, 36);
-  String? hints;
+  //String? hints;
   List<MyTime> myWorkTime = [];
-  List<Widget> myWorkTimeWidget = [];
+  List<Widget> myWorkTimeEditWidget = [];
   List<int> myTimeTarget = [];
-  List<List<int>> myInt = [];
+  List<List<int>> myIntTime = [];
+  List<Widget> viewMyTimes = [];
 
   void setDark() {
     ThemeManager.of(context).setBrightnessPreference(
@@ -135,8 +135,8 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           GestureDetector(
             onTap: () => setNewState(() {
-              if (myInt[round][op] > min) {
-                myInt[round][op]--;
+              if (myIntTime[round][op] > min) {
+                myIntTime[round][op]--;
               }
             }),
             onLongPressStart: (details) {
@@ -144,8 +144,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Duration(milliseconds: 100),
                 (timer) {
                   setNewState(() {
-                    if (myInt[round][op] > min) {
-                      myInt[round][op]--;
+                    if (myIntTime[round][op] > min) {
+                      myIntTime[round][op]--;
                     }
                   });
                 },
@@ -156,19 +156,19 @@ class _MyHomePageState extends State<MyHomePage> {
             }),
             child: const Icon(Icons.remove),
           ),
-          Text('${myInt[round][op]}'),
+          Text('${myIntTime[round][op]}'),
           GestureDetector(
             onTap: () => setNewState(() {
-              if (myInt[round][op] < max) {
-                myInt[round][op]++;
+              if (myIntTime[round][op] < max) {
+                myIntTime[round][op]++;
               }
             }),
             onLongPressStart: (details) {
               timer =
                   Timer.periodic(const Duration(milliseconds: 100), ((timer) {
                 setNewState(() {
-                  if (myInt[round][op] < max) {
-                    myInt[round][op]++;
+                  if (myIntTime[round][op] < max) {
+                    myIntTime[round][op]++;
                   }
                 });
               }));
@@ -235,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 MaterialStateProperty.all(_isDark ? darkColor : null)),
         onPressed: () async {
           setState(() {
-            myWorkTimeWidget.clear();
+            myWorkTimeEditWidget.clear();
             getTimeWork();
           });
           await bottomSheet(h: h, w: w);
@@ -245,20 +245,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void getMyInt() {
     setState(() {
-      myInt.clear();
+      myIntTime.clear();
       if (myWorkTime.isNotEmpty) {
         for (int i = 0; i < myWorkTime.length; i++) {
-          myInt.add([myWorkTime[i].startWork, myWorkTime[i].startBreak]);
+          myIntTime.add([myWorkTime[i].startWork, myWorkTime[i].startBreak]);
         }
       }
     });
   }
 
   void initMyEdit({required double w, required Function x}) {
-    myWorkTimeWidget.clear();
+    myWorkTimeEditWidget.clear();
     if (myWorkTime.isNotEmpty) {
       for (int i = 0; i < myWorkTime.length; i++) {
-        myWorkTimeWidget.add(buildMyEdit(roundNumber: (i + 1), w: w, edit: x));
+        myWorkTimeEditWidget
+            .add(buildMyEdit(roundNumber: (i + 1), w: w, edit: x));
       }
     }
   }
@@ -289,8 +290,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Column(
                     children: [
                       Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: myWorkTimeWidget),
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: myWorkTimeEditWidget,
+                      ),
                       submitMyCustomizeWorkTimeBtn(h: h, w: w, ctx: context)
                     ],
                   ),
@@ -351,9 +353,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {
                         setState(() {
                           edit(() {
-                            myInt.removeAt(roundNumber - 1);
+                            myIntTime.removeAt(roundNumber - 1);
                             myWorkTime.removeAt(roundNumber - 1);
-                            myWorkTimeWidget.removeAt(roundNumber - 1);
+                            myWorkTimeEditWidget.removeAt(roundNumber - 1);
                           });
                         });
                       },
@@ -452,13 +454,61 @@ class _MyHomePageState extends State<MyHomePage> {
   void getMyCustomizeWorkTime() {
     setState(() {
       myWorkTime.clear();
-      for (int i = 0; i < myInt.length; i++) {
-        myWorkTime.add(MyTime(startWork: myInt[i][0], startBreak: myInt[i][1]));
+      for (int i = 0; i < myIntTime.length; i++) {
+        myWorkTime.add(
+            MyTime(startWork: myIntTime[i][0], startBreak: myIntTime[i][1]));
       }
       _currentValueWorkPicker = myWorkTime[0].startWork;
       _currentValueBreakPicker = myWorkTime[0].startBreak;
-      _currentValueRoundPicker = myWorkTime.length;
+      myWorkTime.isNotEmpty ? _currentValueRoundPicker = myWorkTime.length : 1;
     });
+  }
+
+  viewMyTime() {
+    viewMyTimes.clear();
+    for (var i = 0; i < myIntTime.length; i++) {
+      viewMyTimes.add(buildMyView(index: i));
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: viewMyTimes),
+    );
+  }
+
+  buildMyView({required int index}) {
+    setState(() {});
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+            color: _isDark
+                ? darkColor.withOpacity(0.7)
+                : Colors.blue.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(10)),
+        width: 150,
+        margin: EdgeInsets.symmetric(horizontal: 15),
+        padding: EdgeInsets.all(10),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('round ${index + 1}'.toUpperCase()),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text('work for'.toUpperCase()),
+              Text('${myIntTime[index][0]}'),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text('break for'.toUpperCase()),
+              Text('${myIntTime[index][1]}'),
+            ],
+          )
+        ]),
+      ),
+    );
   }
 
   @override
@@ -474,17 +524,36 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          child: Column(children: [
-            roundPicker(),
-            myXDivider(),
-            workBreakTimeWidget(),
-            myBtnS(height * 0.80, width * 0.70),
-            const SizedBox(height: 10),
-            if (myTimeTarget.isNotEmpty)
-              drawTime(d: myTimeTarget[0], h: height, w: width)
-          ]),
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                roundPicker(),
+                myXDivider(),
+                workBreakTimeWidget(),
+                myBtnS(height * 0.80, width * 0.70),
+                const SizedBox(height: 10),
+                if (myTimeTarget.isNotEmpty) viewMyTime(),
+                const SizedBox(height: 10),
+                if (myTimeTarget.isNotEmpty)
+                  drawTime(d: myTimeTarget[_targetIndex], h: height, w: width),
+              ]),
         ),
       ),
     );
   }
 }
+/** ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  if (_targetIndex < myTimeTarget.length - 1) {
+                    _targetIndex++;
+                  }
+                  _controller.restart(
+                      duration: myTimeTarget[_targetIndex] * 60);
+                  debugPrint(_targetIndex.toString());
+                  debugPrint(myTimeTarget.length.toString());
+                  _controller.start();
+                });
+              },
+              child: Text('press'),
+            ) */
