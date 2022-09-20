@@ -196,7 +196,16 @@ class _MyHomePageState extends State<MyHomePage> {
         style: ButtonStyle(
             backgroundColor:
                 MaterialStateProperty.all(_isDark ? darkColor : null)),
-        child: const Icon(Icons.directions_run_rounded),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Row(
+            children: [
+              const Icon(Icons.directions_run_rounded),
+              SizedBox(width: 3),
+              Text('Set All')
+            ],
+          ),
+        ),
         onPressed: () {
           setState(() {
             getTimeWork();
@@ -243,7 +252,16 @@ class _MyHomePageState extends State<MyHomePage> {
             });
             await bottomSheet(h: h, w: w);
           },
-          child: const Icon(Icons.reorder_rounded)),
+          child: Padding(
+            padding: const EdgeInsets.all(3.0),
+            child: Row(
+              children: [
+                const Icon(Icons.reorder_rounded),
+                SizedBox(width: 3),
+                Text('Customize')
+              ],
+            ),
+          )),
     );
   }
 
@@ -297,7 +315,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: myWorkTimeEditWidget,
                       ),
-                      submitMyCustomizeWorkTimeBtn(h: h, w: w, ctx: context)
+                      SizedBox(width: 120,child:  submitMyCustomizeWorkTimeBtn(h: h, w: w, ctx: context))
                     ],
                   ),
                 ),
@@ -395,8 +413,14 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         const SizedBox(height: 10),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [clockBtn(op: 0), clockBtn(op: 1), skipBtn()],
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            clockBtn(op: 0),
+            SizedBox(width: 8),
+            clockBtn(op: 1),
+            SizedBox(width: 8),
+            skipBtn()
+          ],
         )
       ],
     );
@@ -409,7 +433,16 @@ class _MyHomePageState extends State<MyHomePage> {
         style: ButtonStyle(
             backgroundColor:
                 MaterialStateProperty.all(_isDark ? darkColor : null)),
-        child: Icon(Icons.skip_next_rounded),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Row(
+            children: [
+              Icon(Icons.skip_next_rounded),
+              SizedBox(width: 3),
+              Text('Next Step')
+            ],
+          ),
+        ),
         onPressed: () {
           setState(() {
             if (myTimeTarget.isNotEmpty &&
@@ -448,10 +481,37 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         child: op == 0
-            ? Icon(Icons.redo_rounded)
+            ? Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.redo_rounded),
+                    SizedBox(width: 3),
+                    Text('Start Over')
+                  ],
+                ),
+              )
             : _isStart
-                ? Icon(Icons.play_arrow_rounded)
-                : Icon(Icons.pause_rounded),
+                ? Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.play_arrow_rounded),
+                        SizedBox(width: 3),
+                        Text('Resume')
+                      ],
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.pause_rounded),
+                        SizedBox(width: 3),
+                        Text('Pause')
+                      ],
+                    ),
+                  ),
       ),
     );
   }
@@ -470,12 +530,22 @@ class _MyHomePageState extends State<MyHomePage> {
   Tooltip submitMyCustomizeWorkTimeBtn(
       {required double h, required double w, required BuildContext ctx}) {
     return Tooltip(
-      message: 'confirm'.toUpperCase(),
+      message: 'save'.toUpperCase(),
       child: ElevatedButton(
         style: ButtonStyle(
             backgroundColor:
                 MaterialStateProperty.all(_isDark ? darkColor : null)),
-        child: const Icon(Icons.directions_run_rounded),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.save_alt_rounded),
+              SizedBox(width: 3),
+              Text('Save')
+            ],
+          ),
+        ),
         onPressed: () {
           setState(() {
             getMyCustomizeWorkTime();
