@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -315,7 +316,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: myWorkTimeEditWidget,
                       ),
-                      SizedBox(width: 120,child:  submitMyCustomizeWorkTimeBtn(h: h, w: w, ctx: context))
+                      SizedBox(
+                          width: 120,
+                          child: submitMyCustomizeWorkTimeBtn(
+                              h: h, w: w, ctx: context))
                     ],
                   ),
                 ),
@@ -409,7 +413,11 @@ class _MyHomePageState extends State<MyHomePage> {
             fontWeight: FontWeight.bold,
           ),
           onStart: () {},
-          onComplete: () {},
+          onComplete: () {
+            setState(() {
+              successStep();
+            });
+          },
         ),
         const SizedBox(height: 10),
         Row(
@@ -445,18 +453,23 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         onPressed: () {
           setState(() {
-            if (myTimeTarget.isNotEmpty &&
-                _targetIndex < myTimeTarget.length - 1) {
-              _targetIndex++;
-              _controller.restart(duration: (myTimeTarget[_targetIndex]) * 60);
-            } else {
-              _targetIndex = 0;
-              myTimeTarget.clear();
-            }
+            nextProcess();
           });
         },
       ),
     );
+  }
+
+  nextProcess() {
+    setState(() {
+      if (myTimeTarget.isNotEmpty && _targetIndex < myTimeTarget.length - 1) {
+        _targetIndex++;
+        _controller.restart(duration: (myTimeTarget[_targetIndex]) * 60);
+      } else {
+        _targetIndex = 0;
+        myTimeTarget.clear();
+      }
+    });
   }
 
   Tooltip clockBtn({required int op}) {
@@ -614,6 +627,24 @@ class _MyHomePageState extends State<MyHomePage> {
         ]),
       ),
     );
+  }
+
+  successStep() {
+    return AwesomeDialog(
+      context: context,
+      animType: AnimType.leftSlide,
+      headerAnimationLoop: false,
+      dialogType: DialogType.success,
+      showCloseIcon: true,
+      title: 'Success',
+      desc: 'Congelation keep it up',
+      btnOkOnPress: () {
+        setState(() {
+          nextProcess();
+        });
+      },
+      btnOkIcon: Icons.check_circle,
+    ).show();
   }
 
   @override
