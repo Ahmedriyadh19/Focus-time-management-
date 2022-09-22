@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:time_management/model/my_time.dart';
+import 'package:wakelock/wakelock.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -19,6 +20,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late Timer timer;
   bool _isDark = true;
   bool _isStart = false;
+  bool _isAlwaysOn = true;
   int _currentValueRoundPicker = 3;
   int _currentValueWorkPicker = 20;
   int _currentValueBreakPicker = 15;
@@ -38,16 +40,43 @@ class _MyHomePageState extends State<MyHomePage> {
         _isDark ? BrightnessPreference.dark : BrightnessPreference.light);
   }
 
-  IconButton darkBtn() {
-    return IconButton(
-      icon: Icon(_isDark ? Icons.sunny : FontAwesomeIcons.moon),
-      onPressed: () {
-        setState(() {
-          _isDark = !_isDark;
-          setDark();
-        });
-      },
+  Tooltip darkBtn() {
+    return Tooltip(
+      message: 'Dark mode',
+      child: IconButton(
+        icon: Icon(_isDark ? Icons.sunny : FontAwesomeIcons.moon),
+        onPressed: () {
+          setState(() {
+            _isDark = !_isDark;
+            setDark();
+          });
+        },
+      ),
     );
+  }
+
+  Tooltip alwaysOnBtn() {
+    return Tooltip(
+      message: 'Always Screen is ${_isAlwaysOn ? 'On' : 'Off'}',
+      child: IconButton(
+        icon: Icon(_isAlwaysOn
+            ? Icons.phone_android_rounded
+            : Icons.phonelink_erase_rounded),
+        onPressed: () async {
+          await play();
+          setState(() {
+            _isAlwaysOn = !_isAlwaysOn;
+            setAlwaysOn();
+          });
+        },
+      ),
+    );
+  }
+
+  setAlwaysOn() {
+    setState(() {
+      Wakelock.toggle(enable: _isAlwaysOn);
+    });
   }
 
   Container workBreakTimeWidget() {
@@ -413,22 +442,26 @@ class _MyHomePageState extends State<MyHomePage> {
             fontWeight: FontWeight.bold,
           ),
           onStart: () {},
-          onComplete: () {
+          onComplete: () async {
+            await play();
             setState(() {
               successStep();
             });
           },
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            clockBtn(op: 0),
-            SizedBox(width: 8),
-            clockBtn(op: 1),
-            SizedBox(width: 8),
-            skipBtn()
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              clockBtn(op: 0),
+              SizedBox(width: 8),
+              clockBtn(op: 1),
+              SizedBox(width: 8),
+              skipBtn()
+            ],
+          ),
         )
       ],
     );
@@ -638,7 +671,8 @@ class _MyHomePageState extends State<MyHomePage> {
       showCloseIcon: true,
       title: 'Success',
       desc: 'Congelation keep it up',
-      btnOkOnPress: () {
+      btnOkOnPress: () async {
+        stop();
         setState(() {
           nextProcess();
         });
@@ -647,6 +681,17 @@ class _MyHomePageState extends State<MyHomePage> {
     ).show();
   }
 
+  Text print() {
+    return Text(
+        'round ${((_targetIndex + 1) / 2).ceil()}\n${_targetIndex % 2 == 0 ? 'Work' : 'break'} time\n\nstep ${_targetIndex + 1} of ${myTimeTarget.length}'
+            .toUpperCase(),
+        textAlign: TextAlign.center);
+  }
+
+  play() async {}
+
+  stop() async {}
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -654,7 +699,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 5,
-        actions: [darkBtn()],
+        actions: [alwaysOnBtn(), darkBtn()],
         centerTitle: true,
         title: Center(child: Text('focus time'.toUpperCase())),
       ),
@@ -672,8 +717,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 if (myTimeTarget.isNotEmpty &&
                     _targetIndex < myTimeTarget.length)
-                  Text('step ${_targetIndex + 1} of ${myTimeTarget.length}'
-                      .toUpperCase()),
+                  print(),
                 const SizedBox(height: 10),
                 if (myTimeTarget.isNotEmpty &&
                     _targetIndex < myTimeTarget.length)
