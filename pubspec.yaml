@@ -43,6 +43,7 @@ dependencies:
   flutter_launcher_icons: ^0.10.0
   awesome_dialog: ^3.0.1
   wakelock: ^0.6.2
+  audioplayers: ^1.0.1
 
 dev_dependencies:
   flutter_test:

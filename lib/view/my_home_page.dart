@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final CountDownController _controller = CountDownController();
+  final player = AudioPlayer();
   late Timer timer;
   bool _isDark = true;
   bool _isStart = false;
@@ -62,8 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
         icon: Icon(_isAlwaysOn
             ? Icons.phone_android_rounded
             : Icons.phonelink_erase_rounded),
-        onPressed: () async {
-          await play();
+        onPressed: () {
           setState(() {
             _isAlwaysOn = !_isAlwaysOn;
             setAlwaysOn();
@@ -670,9 +671,9 @@ class _MyHomePageState extends State<MyHomePage> {
       dialogType: DialogType.success,
       showCloseIcon: true,
       title: 'Success',
-      desc: 'Congelation keep it up',
+      desc: 'Congratulation keep it up',
       btnOkOnPress: () async {
-        stop();
+        await stop();
         setState(() {
           nextProcess();
         });
@@ -688,9 +689,14 @@ class _MyHomePageState extends State<MyHomePage> {
         textAlign: TextAlign.center);
   }
 
-  play() async {}
+  play() async {
+    await player.play(DeviceFileSource(
+        'lib/assets/sound.mp3')); // will immediately start playing
+  }
 
-  stop() async {}
+  stop() async {
+    await player.stop(); // will resume from beginning
+  }
 
   @override
   Widget build(BuildContext context) {
